@@ -1,7 +1,7 @@
 openshift-diy-nodejs-mongodb
 ============================
 
-Thanks for the great work by [razorinc](https://github.com/razorinc/redis-openshift-example) and [creationix](https://github.com/creationix/nvm/), this repo let you test node.js v0.8 and above with MongoDB in an OpenShift DIY application. It will first check for pre-compiled Node.js linux version, then compile from source if not found.
+Thanks for the great work by [razorinc](https://github.com/razorinc/redis-openshift-example) and [creationix](https://github.com/creationix/nvm/), this repo let you test Node.js v0.8 and above with MongoDB in an OpenShift DIY application. It will first check for pre-compiled Node.js linux version, then compile from source if not found.
 
 [node-supervisor](https://github.com/isaacs/node-supervisor) is used to automatically restart the node.js app if somehow crashed.
 
@@ -17,29 +17,6 @@ Usage - New (rhc-1.4.7 or above)
 Create the DIY app
 
     rhc app create yourapp diy-0.1 --from-code=git://github.com/eddie168/openshift-diy-nodejs-mongodb.git
-
-Check for node version:
-
-    rhc tail -a test
-    Password: **
-
-    ==> diy-0.1/logs/error.log <==
-    DEBUG: Running node-supervisor with
-    DEBUG:   program 'server.js'
-    DEBUG:   --watch '.'
-    DEBUG:   --ignore 'node_modules'
-    DEBUG:   --extensions 'node|js'
-    DEBUG:   --exec 'node'
-    DEBUG: Starting child process with 'node server.js'
-    DEBUG: Ignoring directory '/var/lib/openshift/xxxxxxxxxxxxxxxxxx/app-root/runtime/repo/node_modules'.
-    DEBUG: Watching directory '/var/lib/openshift/xxxxxxxxxxxxxxxxxx/app-root/runtime/repo' for changes.
-    
-    ==> diy-0.1/logs/server.log <==
-    
-    
-    Tue Feb 19 2013 02:57:32 GMT-0500 (EST): Node (version: v0.8.20) /var/lib/openshift/xxxxxxxxxxxxxxxxxx/app-root/runtime/repo/server.js started on xxx.xxx.xxx.xxx:8080 ...
-
-In this case it is node `v0.8.20`.
 
 **Note that using `--from-code` will not retain this repository as `remote` in your app's repo, so you will have to manually merge any future updates if you interested.**
 
