@@ -1,0 +1,22 @@
+#!/bin/bash
+# The logic to stop your application should be put in this script.
+. ${OPENSHIFT_DATA_DIR}node.sh
+# Stop Mongodb
+PIDFILE=${OPENSHIFT_DATA_DIR}mongodb/pid/mongodb.pid
+if [ ! -f $PIDFILE ]; then
+        echo "$PIDFILE does not exist, mongodb is not running"
+else
+        PID=$(cat $PIDFILE)
+        echo "Stopping MongoDB..."
+        mongod --config ${OPENSHIFT_DATA_DIR}mongodb.conf --shutdown
+        while [ -x /proc/${PID} ]
+        do
+            echo "Waiting for MongoDB to shutdown ..."
+            sleep 1
+        done
+        echo "MongoDB stopped"
+fi
+# Stop Node.js
+#kill `ps -ef | grep node | grep -v grep | awk '{ print $2 }'` > /dev/null 2>&1
+kill `ps -ef | grep supervisor | grep -v grep | awk '{ print $2 }'` > /dev/null 2>&1
+exit 0

@@ -1,15 +1,22 @@
-openshift-diy-nodejs08
-========================
+openshift-diy-nodejs-mongodb
+============================
 
-Thanks for the great work by [razorinc](https://github.com/razorinc/redis-openshift-example) and [creationix](https://github.com/creationix/nvm/), this repo let you test node.js v0.8 (v0.9 seems OK too) with OpenShift DIY application type. It will first check for pre-compiled linux version, then compile from source if not found.
+Thanks for the great work by [razorinc](https://github.com/razorinc/redis-openshift-example) and [creationix](https://github.com/creationix/nvm/), this repo let you test node.js v0.8 and above with MongoDB in an OpenShift DIY application. It will first check for pre-compiled Node.js linux version, then compile from source if not found.
 
 [node-supervisor](https://github.com/isaacs/node-supervisor) is used to automatically restart the node.js app if somehow crashed.
+
+- **Note that Node.js `v0.6.x` won't work with this method.**
+- **This repo is for technology preview/testing purpose only, not good for production**
+- **MongoDB server is setup for standalone environment only**
+- **NO authentication is setup when connect to MongoDB server**
+- **MongoDB Journal is disabled to save disk space**
+- **MongoDB binary alone use up around 240MB, better limit your test database size under 500MB**
 
 Usage - New (rhc-1.4.7 or above)
 --------------------------------
 Create the DIY app
 
-    rhc app create yourapp diy-0.1 --from-code=git://github.com/eddie168/openshift-diy-nodejs08.git
+    rhc app create yourapp diy-0.1 --from-code=git://github.com/eddie168/openshift-diy-nodejs-mongodb.git
 
 Check for node version:
 
@@ -46,34 +53,44 @@ Create an DIY app
 Add this repository
 
     cd yourapp
-    git remote add nodejs08 -m master git://github.com/eddie168/openshift-diy-nodejs08.git
-    git pull -s recursive -X theirs nodejs08 master
+    git remote add nodejsMongo -m master git://github.com/eddie168/openshift-diy-nodejs-mongodb.git
+    git pull -s recursive -X theirs nodejsMongo master
 
 Then push the repo to openshift
 
     git push
 
-If pre-compiled binary is not available, first push will take a while to finish.
+If pre-compiled Node.js binary is not available, first push will take a while to finish.
 
-You can specify the node.js script to start with in `package.json` as described [here](https://openshift.redhat.com/community/kb/kb-e1048-how-can-i-run-my-own-nodejs-script).
+You can specify the Node.js script to start with in `package.json` as described [here](https://openshift.redhat.com/community/kb/kb-e1048-how-can-i-run-my-own-nodejs-script).
 
-Check the end of the message for node version:
+Check the end of the `git push` message for Node.js and MongoDB version:
 
-    remote: Starting application...
+    remote: Starting DIY cart
     remote: Node Version:
     remote: { http_parser: '1.0',
-    remote:   node: '0.8.20',
-    remote:   v8: '3.11.10.25',
-    remote:   ares: '1.7.5-DEV',
-    remote:   uv: '0.8',
+    remote:   node: '0.10.10',
+    remote:   v8: '3.14.5.9',
+    remote:   ares: '1.9.0-DEV',
+    remote:   uv: '0.10.10',
     remote:   zlib: '1.2.3',
-    remote:   openssl: '1.0.0f' }
-    remote: nohup supervisor server.js >/var/lib/openshift/xxxxxxxxxxxxxxxxxx/diy-0.1/logs/server.log 2>&1 &
-    remote: Done
+    remote:   modules: '11',
+    remote:   openssl: '1.0.1e' }
+    remote: MongoDB Version:
+    remote: db version v2.4.4
+	remote: Thu Jun 13 04:15:26.653 git version: xxxxxxxxxxxxxxxx
+	remote: note: noprealloc may hurt performance in many applications
+	remote: about to fork child process, waiting until server is ready for connections.
+	remote: forked process: xxxx
+	remote: all output going to: /var/lib/openshift/xxxxxxxxxx/diy/logs/mongodb.log
+	remote: child process started successfully, parent exiting
+	remote: nohup supervisor -w . -i node_modules server.js >/var/lib/openshift/xxxxxxxx/diy//logs/server.log 2>/var/lib/openshift/xxxxxxxx/diy//logs/error.log &
 
-In this case it is node `v0.8.20`.
+In this case it is Node.js `v0.10.10` and MongoDB `v2.4.4`.
 
-Now open your openshift app in browser and you should see the standard openshift sample page. Enjoy!!
+You can find the Node.js app's log at `$OPENSHIFT_DIY_LOG_DIR/server.log`. Subsequent push or restart will rename the log file with a time stamp before overwritten. The same goes to MongoDB log file and can be found at `$OPENSHIFT_DIY_LOG_DIR/mongodb.log`. You should be able to see these log files with `rhc tail -a yourapp`.
+
+Check the log file for the MongoDB test output in the example `server.js`.
 
 Settings
 --------
@@ -81,20 +98,38 @@ Settings
 Edit `config_diy.json`
 
     "nodejs": {
-      "version": "v0.8.20",
+      "version": "v0.10.10",
       "removeOld": false,
       "separateErrorLog": true,
       "storeModulesInData": true,
       "cleanModulesInData": false
+    },
+    "mongodb": {
+      "version": "2.4.4",
+      "port": 27017,
+      "removeOld": false
     }
 
-- `version`: change node.js version
-- `removeOld`: delete previous installed node.js binarys
-- `separateErrorLog`: If `true`, error will be redirected to `${OPENSHIFT_DIY_LOG_DIR}/error.log`, otherwise will be redirected into `${OPENSHIFT_DIY_LOG_DIR}/server.log`
-- `storeModulesInData`: Every deploy (`git push`) the entire repo got refreshed which mean all modules/packages will need to re-install again. Set `storeModulesInData` to `true` so that modules/packages are installed under `$OPENSHIFT_DATA_DIR`, as a result the time required to re-deploy can be reduced (especially when there are native code modules such as `bcrypt`).
-- `cleanModulesInData`: If somehow you want to do a fresh install of the modules, set this option to `true`. Remember to set it back to `false` before the next deploy or everything will re-install again.
+- `nodejs.version`: change node.js version
+- `nodejs.removeOld`: delete previous installed node.js binarys
+- `nodejs.separateErrorLog`: If `true`, error will be redirected to `${OPENSHIFT_DIY_LOG_DIR}/error.log`, otherwise will be redirected into `${OPENSHIFT_DIY_LOG_DIR}/server.log`
+- `nodejs.storeModulesInData`: Every deploy (`git push`) the entire repo got refreshed which mean all modules/packages will need to re-install again. Set `storeModulesInData` to `true` so that modules/packages are installed under `$OPENSHIFT_DATA_DIR`, as a result the time required to re-deploy can be reduced (especially when there are native code modules such as `bcrypt`).
+- `nodejs.cleanModulesInData`: If somehow you want to do a fresh install of the modules, set this option to `true`. Remember to set it back to `false` before the next deploy or everything will re-install again.
+- `mongodb.version`: change MongoDB version
+- `mongodb.port`: port used by MongoDB (Refer to port number limit [here](https://openshift.redhat.com/community/kb/kb-e1038-i-cant-bind-to-a-port))
+- `mongodb.removeOld`: delete previous installed MongoDB binary
 
-`commit` and then `push` to reflect the changes to the OpenShift app.
+After change settings, `commit` and then `push` to reflect the changes to your OpenShift gear.
 
-**Note that `v0.6.x` won't work with this method.**
+
+Use MongoDB in Node.js
+----------------------
+
+Environment variables `MONGODB_URL` (which is based on `$OPENSHIFT_DIY_IP` when the app is started) is defined. Example of connecting to MongoDB server using the Node.js native driver:
+
+	var MongoClient = require('mongodb').MongoClient;
+	MongoClient.connect(process.env.MONGODB_URL + "testDB", function(err, db) {
+  	  if (err) { return console.dir(err); }
+  	});
+
 

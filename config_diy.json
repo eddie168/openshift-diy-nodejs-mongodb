@@ -1,0 +1,14 @@
+{
+  "nodejs": {
+    "version": "v0.10.10",
+    "removeOld": false,
+    "separateErrorLog": true,
+    "storeModulesInData": true,
+    "cleanModulesInData": false
+  },
+  "mongodb": {
+    "version": "2.4.4",
+    "port": 27017,
+    "removeOld": false
+  }
+}
