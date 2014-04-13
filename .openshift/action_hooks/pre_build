@@ -96,12 +96,19 @@ if [ ! -e ${OPENSHIFT_DATA_DIR}mongodb-linux-${MONGODB_TYPE}-${MONGODB_VERSION}/
   mkdir -p ${OPENSHIFT_DATA_DIR}mongodb/pid/
 fi
 
+# Determine log directory
+if [ "$OPENSHIFT_DIY_LOG_DIR" ]; then
+  LOG_DIR=$OPENSHIFT_DIY_LOG_DIR
+else
+  LOG_DIR=$OPENSHIFT_LOG_DIR
+fi
+
 # Create mongod.conf
 cat <<EOF > ${OPENSHIFT_DATA_DIR}mongodb.conf
 # mongodb.conf
 
 #where to log
-logpath=${OPENSHIFT_DIY_LOG_DIR}mongodb.log
+logpath=${LOG_DIR}mongodb.log
 
 # fork and run in background
 fork = true
@@ -113,9 +120,6 @@ dbpath=${OPENSHIFT_DATA_DIR}mongodb/data/
 
 pidfilepath=${OPENSHIFT_DATA_DIR}mongodb/pid/mongodb.pid
 
-# Enables periodic logging of CPU utilization and I/O wait
-#cpu = false
-
 # Disable the HTTP interface (Defaults to localhost:27018).
 nohttpinterface = true
 
@@ -124,6 +128,10 @@ nojournal = true
 
 # Disable data file preallocation.
 noprealloc = true
+
+# Specific configuration for openshift cartridge
+smallfiles = true
+quiet = true
 EOF
 
 # Create a shell script to start mongo shell

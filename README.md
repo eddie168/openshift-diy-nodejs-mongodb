@@ -33,7 +33,7 @@ Add this repository
     git remote add nodejsMongo -m master git://github.com/eddie168/openshift-diy-nodejs-mongodb.git
     git pull -s recursive -X theirs nodejsMongo master
 
-Then push the repo to openshift
+Change settings in `config_diy.json` if needed (remember to commit the changes), then push the repo to openshift
 
     git push
 
@@ -65,7 +65,7 @@ Check the end of the `git push` message for Node.js and MongoDB version:
 
 In this case it is Node.js `v0.10.10` and MongoDB `v2.4.4`.
 
-You can find the Node.js app's log at `$OPENSHIFT_DIY_LOG_DIR/server.log`. Subsequent push or restart will rename the log file with a time stamp before overwritten. The same goes to MongoDB log file and can be found at `$OPENSHIFT_DIY_LOG_DIR/mongodb.log`. You should be able to see these log files with `rhc tail -a yourapp`.
+You can find the Node.js app's log at `$OPENSHIFT_LOG_DIR/server.log`. Subsequent push or restart will rename the log file with a time stamp before overwritten. The same goes to MongoDB log file and can be found at `$OPENSHIFT_LOG_DIR/mongodb.log`. You should be able to see these log files with `rhc tail -a yourapp`.
 
 Check the log file for the MongoDB test output in the example `server.js`.
 
@@ -75,23 +75,22 @@ Settings
 Edit `config_diy.json`
 
     "nodejs": {
-      "version": "v0.10.10",
-      "removeOld": false,
+      "version": "v0.10.26",
+      "removeOld": true,
       "separateErrorLog": true,
-      "storeModulesInData": true,
-      "cleanModulesInData": false
+      "cleanNPMInstall": false
     },
     "mongodb": {
-      "version": "2.4.4",
+      "version": "2.6.0",
       "port": 27017,
-      "removeOld": false
+      "removeOld": true
     }
 
 - `nodejs.version`: change node.js version
 - `nodejs.removeOld`: delete previous installed node.js binarys
 - `nodejs.separateErrorLog`: If `true`, error will be redirected to `${OPENSHIFT_DIY_LOG_DIR}/error.log`, otherwise will be redirected into `${OPENSHIFT_DIY_LOG_DIR}/server.log`
-- `nodejs.storeModulesInData`: Every deploy (`git push`) the entire repo got refreshed which mean all modules/packages will need to re-install again. Set `storeModulesInData` to `true` so that modules/packages are installed under `$OPENSHIFT_DATA_DIR`, as a result the time required to re-deploy can be reduced (especially when there are native code modules such as `bcrypt`).
-- `nodejs.cleanModulesInData`: If somehow you want to do a fresh install of the modules, set this option to `true`. Remember to set it back to `false` before the next deploy or everything will re-install again.
+- `cleanNPMInstall`: If `true`, the `node_modules/` directory will be deleted before execute `npm install`. Set it to `false` to reduce the time required to re-deploy (especially when there are native code modules such as `bcrypt`).
+
 - `mongodb.version`: change MongoDB version
 - `mongodb.port`: port used by MongoDB (Refer to port number limit [here](https://openshift.redhat.com/community/kb/kb-e1038-i-cant-bind-to-a-port))
 - `mongodb.removeOld`: delete previous installed MongoDB binary
